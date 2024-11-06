@@ -1,0 +1,482 @@
+<html><head><base href="." />
+<meta charset="UTF-8">
+<title>Generador de Rifas</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+h1 {
+    color: white;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 2.5em;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.subtitle {
+    color: white;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.2em;
+}
+
+.info-container {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    max-width: 800px;
+    width: 100%;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.info-input {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.info-input label {
+    font-weight: bold;
+    color: #333;
+}
+
+.info-input input {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    width: 250px;
+}
+
+.container {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    max-width: 800px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background: #45a049;
+    transform: translateY(-2px);
+}
+
+.numbers-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 5px;
+    margin-top: 20px;
+}
+
+.number {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f0f0;
+    border-radius: 5px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-direction: column;
+    padding: 5px;
+    min-height: 60px;
+    height: 100%;
+    position: relative;
+}
+
+.number .number-text {
+    font-size: 1.2em;
+    font-weight: bold;
+    position: absolute;
+    top: 5px;
+}
+
+.number .buyer-name {
+    font-size: 0.7em;
+    position: absolute;
+    bottom: 5px;
+    width: 90%;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.number.selected {
+    background: #4CAF50;
+    color: white;
+}
+
+.number.has-buyer {
+    background: #FFD700;
+    color: black;
+}
+
+.number.paid {
+    background: #4CAF50;
+    color: white;
+}
+
+.number.reserved {
+    background: #FFD700;
+    color: black;
+}
+
+.number.pending {
+    background: #ff4444;
+    color: white;
+}
+
+.number:hover {
+    background: #e0e0e0;
+}
+
+.export-section {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.modal-content select {
+    margin: 10px 0;
+    padding: 5px;
+    width: 200px;
+}
+
+.modal input {
+    margin: 10px 0;
+    padding: 5px;
+    width: 200px;
+}
+
+.status-indicator {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.6em;
+    width: 90%;
+    text-align: center;
+}
+
+@media (max-width: 600px) {
+    .numbers-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+</style>
+</head>
+<body>
+    <h1>Generador de Rifas</h1>
+    <div class="subtitle">consultoria-ingenieria.com</div>
+    
+    <div class="info-container">
+        <div class="info-input">
+            <label for="premio">Premio:</label>
+            <input type="text" id="premio" placeholder="Ingrese el premio">
+        </div>
+        <div class="info-input">
+            <label for="fecha">Fecha del Sorteo:</label>
+            <input type="date" id="fecha">
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="controls">
+            <button onclick="selectRandom()">Seleccionar Número al Azar</button>
+            <button onclick="clearSelection()">Iniciar Nueva Rifa</button>
+            <button onclick="exportPDF()">Exportar a PDF</button>
+        </div>
+        
+        <div class="numbers-grid" id="numbersGrid"></div>
+        
+        <div class="export-section">
+            <p>Números seleccionados: <span id="selectedCount">0</span></p>
+        </div>
+    </div>
+
+    <div id="buyerModal" class="modal">
+        <div class="modal-content">
+            <h3>Ingrese el nombre del comprador</h3>
+            <input type="text" id="buyerName" placeholder="Nombre del comprador">
+            <select id="paymentStatus">
+                <option value="pending">Pendiente de Pago</option>
+                <option value="reserved">Apartado</option>
+                <option value="paid">Pagado</option>
+            </select>
+            <button onclick="saveBuyerName()">Guardar</button>
+            <button onclick="closeModal()">Cancelar</button>
+        </div>
+    </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+let selectedNumbers = new Set();
+let buyerNames = {};
+let paymentStatuses = {};
+let currentNumber = null;
+let isEditing = false;
+let rifaCounter = parseInt(localStorage.getItem('rifaCounter') || '0');
+
+function loadLastRifa() {
+    const lastRifaData = localStorage.getItem('currentRifa');
+    if (lastRifaData) {
+        const data = JSON.parse(lastRifaData);
+        document.getElementById('premio').value = data.premio || '';
+        document.getElementById('fecha').value = data.fecha || '';
+        selectedNumbers = new Set(data.selectedNumbers);
+        buyerNames = data.buyerNames || {};
+        paymentStatuses = data.paymentStatuses || {};
+        
+        for (let number of selectedNumbers) {
+            updateNumberAppearance(number, paymentStatuses[number], buyerNames[number]);
+        }
+        updateSelectedCount();
+    }
+}
+
+function autoSave() {
+    const currentRifaData = {
+        premio: document.getElementById('premio').value,
+        fecha: document.getElementById('fecha').value,
+        selectedNumbers: Array.from(selectedNumbers),
+        buyerNames: buyerNames,
+        paymentStatuses: paymentStatuses
+    };
+    localStorage.setItem('currentRifa', JSON.stringify(currentRifaData));
+}
+
+function saveCurrentRifa() {
+    rifaCounter++;
+    const rifaData = {
+        premio: document.getElementById('premio').value,
+        fecha: document.getElementById('fecha').value,
+        selectedNumbers: Array.from(selectedNumbers),
+        buyerNames: buyerNames,
+        paymentStatuses: paymentStatuses
+    };
+    localStorage.setItem(`rifa_${rifaCounter}`, JSON.stringify(rifaData));
+    localStorage.setItem('rifaCounter', rifaCounter.toString());
+}
+
+function showBuyerModal() {
+    document.getElementById('buyerModal').style.display = 'flex';
+    if (!isEditing) {
+        document.getElementById('buyerName').value = '';
+        document.getElementById('paymentStatus').value = 'pending';
+    }
+}
+
+function closeModal() {
+    document.getElementById('buyerModal').style.display = 'none';
+    currentNumber = null;
+    isEditing = false;
+}
+
+function selectRandom() {
+    let availableNumbers = [];
+    for(let i = 0; i < 100; i++) {
+        if(!selectedNumbers.has(i)) {
+            availableNumbers.push(i);
+        }
+    }
+    if(availableNumbers.length > 0) {
+        const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+        const number = availableNumbers[randomIndex];
+        currentNumber = number;
+        isEditing = false;
+        showBuyerModal();
+    }
+}
+
+function createGrid() {
+    const grid = document.getElementById('numbersGrid');
+    for(let i = 0; i < 100; i++) {
+        const number = document.createElement('div');
+        number.className = 'number';
+        const numberSpan = document.createElement('span');
+        numberSpan.className = 'number-text';
+        numberSpan.textContent = i.toString().padStart(2, '0');
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'status-indicator';
+        const buyerSpan = document.createElement('span');
+        buyerSpan.className = 'buyer-name';
+        number.appendChild(numberSpan);
+        number.appendChild(statusSpan);
+        number.appendChild(buyerSpan);
+        number.onclick = () => toggleNumber(i);
+        grid.appendChild(number);
+    }
+}
+
+function toggleNumber(num) {
+    currentNumber = num;
+    if(buyerNames[num]) {
+        document.getElementById('buyerName').value = buyerNames[num];
+        document.getElementById('paymentStatus').value = paymentStatuses[num] || 'pending';
+        isEditing = true;
+    } else {
+        document.getElementById('buyerName').value = '';
+        document.getElementById('paymentStatus').value = 'pending';
+        isEditing = false;
+    }
+    showBuyerModal();
+}
+
+function updateNumberAppearance(number, status, name) {
+    const numberElement = document.querySelector(`.number:nth-child(${number + 1})`);
+    numberElement.classList.remove('paid', 'reserved', 'pending');
+    numberElement.classList.add(status);
+    numberElement.querySelector('.buyer-name').textContent = name;
+    numberElement.querySelector('.status-indicator').textContent = 
+        status === 'paid' ? 'PAGADO' : 
+        status === 'reserved' ? 'APARTADO' : 
+        'PENDIENTE';
+}
+
+function saveBuyerName() {
+    const name = document.getElementById('buyerName').value.trim();
+    const status = document.getElementById('paymentStatus').value;
+    
+    if(name && currentNumber !== null) {
+        buyerNames[currentNumber] = name;
+        paymentStatuses[currentNumber] = status;
+        updateNumberAppearance(currentNumber, status, name);
+        selectedNumbers.add(currentNumber);
+        updateSelectedCount();
+        autoSave();
+    }
+    closeModal();
+}
+
+function clearSelection() {
+    if(confirm('¿Está seguro que desea borrar todos los datos? Esta acción no se puede deshacer.')) {
+        saveCurrentRifa();
+        selectedNumbers.clear();
+        buyerNames = {};
+        paymentStatuses = {};
+        document.querySelectorAll('.number').forEach(num => {
+            num.classList.remove('paid', 'reserved', 'pending');
+            num.querySelector('.buyer-name').textContent = '';
+            num.querySelector('.status-indicator').textContent = '';
+        });
+        document.getElementById('premio').value = '';
+        document.getElementById('fecha').value = '';
+        updateSelectedCount();
+        localStorage.removeItem('currentRifa');
+        autoSave();
+    }
+}
+
+function updateSelectedCount() {
+    document.getElementById('selectedCount').textContent = selectedNumbers.size;
+}
+
+function exportPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Title
+    doc.setFontSize(20);
+    doc.text('Números de Rifa', 105, 20, { align: 'center' });
+    
+    // Add premio and fecha
+    doc.setFontSize(14);
+    const premio = document.getElementById('premio').value || 'No especificado';
+    const fecha = document.getElementById('fecha').value || 'No especificada';
+    doc.text(`Premio: ${premio}`, 20, 35);
+    doc.text(`Fecha del Sorteo: ${fecha}`, 20, 45);
+    
+    // Numbers list
+    doc.setFontSize(12);
+    const sortedNumbers = Array.from(selectedNumbers).sort((a, b) => a - b);
+    let y = 60; // Adjusted starting position to account for new header info
+    
+    sortedNumbers.forEach((num) => {
+        const status = paymentStatuses[num] === 'paid' ? 'PAGADO' : 
+                      paymentStatuses[num] === 'reserved' ? 'APARTADO' : 
+                      'PENDIENTE';
+        const text = `${num.toString().padStart(2, '0')} - ${buyerNames[num]} (${status})`;
+        doc.text(text, 20, y);
+        y += 10;
+        
+        // Add new page if needed
+        if (y > 280) {
+            doc.addPage();
+            y = 20;
+        }
+    });
+    
+    doc.save('rifa.pdf');
+}
+
+createGrid();
+
+document.getElementById('premio').addEventListener('change', autoSave);
+document.getElementById('fecha').addEventListener('change', autoSave);
+window.addEventListener('load', loadLastRifa);
+
+document.getElementById('buyerName').addEventListener('keypress', function(e) {
+    if(e.key === 'Enter') {
+        saveBuyerName();
+    }
+});
+</script>
+</body></html>
